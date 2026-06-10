@@ -1,0 +1,51 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to What's Up Docker",
+        "description": "Enter the connection details for your WUD instance.",
+        "data": {
+          "url": "WUD URL",
+          "username": "Username (optional)",
+          "password": "Password or API token (optional)",
+          "verify_ssl": "Verify TLS certificate",
+          "scan_interval": "Poll interval (seconds)"
+        },
+        "data_description": {
+          "url": "Base URL of your WUD instance, e.g. http://192.168.1.10:3000 or https://wud.example.com",
+          "verify_ssl": "Disable when using a self-signed certificate behind a reverse proxy",
+          "scan_interval": "How often to poll WUD for container updates (minimum 60 s)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate with What's Up Docker",
+        "description": "Credentials for {url} are no longer valid. Enter new credentials.",
+        "data": {
+          "username": "Username (optional)",
+          "password": "Password or API token (optional)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to WUD. Check the URL and that WUD is running.",
+      "invalid_auth": "Invalid username or password/token.",
+      "unknown": "Unexpected error. Check the Home Assistant logs."
+    },
+    "abort": {
+      "already_configured": "This WUD instance is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "What's Up Docker options",
+        "data": {
+          "scan_interval": "Poll interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "How often to poll WUD for container updates (minimum 60 s)"
+        }
+      }
+    }
+  }
+}
