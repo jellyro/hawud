@@ -7,7 +7,7 @@
   "documentation": "https://github.com/jellyro/hawud",
   "issue_tracker": "https://github.com/jellyro/hawud/issues",
   "codeowners": [],
-  "version": "1.1.1",
+  "version": "1.1.2",
   "homeassistant": "2026.6.0",
   "icon": "mdi:docker"
 }
