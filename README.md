@@ -70,3 +70,11 @@ In addition to the standard update entity fields, each entity exposes the follow
 - To have the Install button actually update a container, configure a **Docker** or **Compose** trigger in WUD for that container.
 - Without a trigger, Install triggers a watch refresh (re-checks for updates) but does not update the container.
 - If you run multiple WUD instances, give each a unique **Instance name** during setup to keep entities clearly separated.
+
+## Attribution
+
+This is a third-party Home Assistant integration for [What's Up Docker (WUD)](https://github.com/fmartinou/whats-up-docker).
+
+WUD is developed by [Manfred Martin](https://github.com/fmartinou) and is licensed under the [MIT License](https://github.com/fmartinou/whats-up-docker/blob/master/LICENSE).
+
+This integration is not affiliated with or endorsed by the WUD project.
