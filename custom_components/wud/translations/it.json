@@ -1,0 +1,51 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connetti a What's Up Docker",
+        "description": "Inserisci i dettagli di connessione per la tua istanza WUD.",
+        "data": {
+          "url": "URL WUD",
+          "username": "Nome utente (opzionale)",
+          "password": "Password o token API (opzionale)",
+          "verify_ssl": "Verifica certificato TLS",
+          "scan_interval": "Intervallo di polling (secondi)"
+        },
+        "data_description": {
+          "url": "URL di base della tua istanza WUD, es. http://192.168.1.10:3000 o https://wud.example.com",
+          "verify_ssl": "Disabilita quando si utilizza un certificato autofirmato dietro un reverse proxy",
+          "scan_interval": "Con quale frequenza interrogare WUD per aggiornamenti dei container (minimo 60 s)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Ri-autenticarsi con What's Up Docker",
+        "description": "Le credenziali per {url} non sono più valide. Inserisci nuove credenziali.",
+        "data": {
+          "username": "Nome utente (opzionale)",
+          "password": "Password o token API (opzionale)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossibile connettersi a WUD. Controlla l'URL e che WUD sia in esecuzione.",
+      "invalid_auth": "Nome utente o password/token non validi.",
+      "unknown": "Errore imprevisto. Controlla i log di Home Assistant."
+    },
+    "abort": {
+      "already_configured": "Questa istanza WUD è già configurata."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opzioni di What's Up Docker",
+        "data": {
+          "scan_interval": "Intervallo di polling (secondi)"
+        },
+        "data_description": {
+          "scan_interval": "Con quale frequenza interrogare WUD per aggiornamenti dei container (minimo 60 s)"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Verbind met What's Up Docker",
+        "description": "Voer de verbindingsgegevens in voor uw WUD-instantie.",
+        "data": {
+          "url": "WUD URL",
+          "username": "Gebruikersnaam (optioneel)",
+          "password": "Wachtwoord of API-token (optioneel)",
+          "verify_ssl": "TLS-certificaat verifiëren",
+          "scan_interval": "Poll-interval (seconden)"
+        },
+        "data_description": {
+          "url": "Basis-URL van uw WUD-instantie, bijv. http://192.168.1.10:3000 of https://wud.example.com",
+          "verify_ssl": "Schakel uit bij gebruik van een zelfondertekend certificaat achter een reverse proxy",
+          "scan_interval": "Hoe vaak WUD moet worden gepolld voor container-updates (minimaal 60 s)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Opnieuw authenticeren met What's Up Docker",
+        "description": "De referenties voor {url} zijn niet langer geldig. Voer nieuwe referenties in.",
+        "data": {
+          "username": "Gebruikersnaam (optioneel)",
+          "password": "Wachtwoord of API-token (optioneel)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan geen verbinding maken met WUD. Controleer de URL en of WUD draait.",
+      "invalid_auth": "Ongeldige gebruikersnaam of wachtwoord/token.",
+      "unknown": "Onverwachte fout. Controleer de Home Assistant-logboeken."
+    },
+    "abort": {
+      "already_configured": "Deze WUD-instantie is al geconfigureerd."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "What's Up Docker opties",
+        "data": {
+          "scan_interval": "Poll-interval (seconden)"
+        },
+        "data_description": {
+          "scan_interval": "Hoe vaak WUD moet worden gepolld voor container-updates (minimaal 60 s)"
+        }
+      }
+    }
+  }
+}

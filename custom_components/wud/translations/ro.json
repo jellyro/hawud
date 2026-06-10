@@ -1,0 +1,51 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Conectare la What's Up Docker",
+        "description": "Introduceți detaliile de conexiune pentru instanța WUD.",
+        "data": {
+          "url": "URL WUD",
+          "username": "Nume utilizator (opțional)",
+          "password": "Parolă sau token API (opțional)",
+          "verify_ssl": "Verificare certificat TLS",
+          "scan_interval": "Interval de interogare (secunde)"
+        },
+        "data_description": {
+          "url": "URL de bază al instanței WUD, de ex. http://192.168.1.10:3000 sau https://wud.example.com",
+          "verify_ssl": "Dezactivați când utilizați un certificat auto-semnat în spatele unui proxy invers",
+          "scan_interval": "Cât de des să interogați WUD pentru actualizări de containere (minim 60 s)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-autentificare cu What's Up Docker",
+        "description": "Credențialele pentru {url} nu mai sunt valide. Introduceți credențiale noi.",
+        "data": {
+          "username": "Nume utilizator (opțional)",
+          "password": "Parolă sau token API (opțional)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Nu se poate conecta la WUD. Verificați URL-ul și că WUD rulează.",
+      "invalid_auth": "Nume utilizator sau parolă/token invalid.",
+      "unknown": "Eroare neașteptată. Verificați jurnalele Home Assistant."
+    },
+    "abort": {
+      "already_configured": "Această instanță WUD este deja configurată."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opțiuni What's Up Docker",
+        "data": {
+          "scan_interval": "Interval de interogare (secunde)"
+        },
+        "data_description": {
+          "scan_interval": "Cât de des să interogați WUD pentru actualizări de containere (minim 60 s)"
+        }
+      }
+    }
+  }
+}
