@@ -73,7 +73,10 @@ class WudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except aiohttp.ClientError as err:
             raise UpdateFailed(f"Error communicating with WUD API: {err}") from err
 
-        return {c["id"]: c for c in containers}
+        return {
+            f"{c.get('watcher', '')}_{c.get('name', c.get('id', ''))}": c
+            for c in containers
+        }
 
     async def async_get_container_triggers(
         self, container_id: str

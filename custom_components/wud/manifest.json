@@ -1,6 +1,6 @@
 {
-  "domain": "wud",
-  "name": "What's Up Docker",
+  "domain": "hawud",
+  "name": "What's Up Docker Integration",
   "integration_type": "hub",
   "config_flow": true,
   "iot_class": "local_polling",

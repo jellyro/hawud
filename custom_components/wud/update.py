@@ -8,6 +8,7 @@ from typing import Any
 import aiohttp
 from homeassistant.components.update import UpdateEntity, UpdateEntityFeature
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -26,17 +27,17 @@ async def async_setup_entry(
 ) -> None:
     """Set up WUD update entities from a config entry."""
     coordinator: WudCoordinator = entry.runtime_data
-    known_ids: set[str] = set()
+    known_keys: set[str] = set()
 
     def _handle_coordinator_update() -> None:
         """Add entities for any containers discovered since last poll."""
         if not coordinator.data:
             return
         new_entities: list[WudUpdateEntity] = []
-        for container_id in coordinator.data:
-            if container_id not in known_ids:
-                known_ids.add(container_id)
-                new_entities.append(WudUpdateEntity(coordinator, container_id, entry))
+        for container_key in coordinator.data:
+            if container_key not in known_keys:
+                known_keys.add(container_key)
+                new_entities.append(WudUpdateEntity(coordinator, container_key, entry))
         if new_entities:
             async_add_entities(new_entities)
 
@@ -56,21 +57,26 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
     def __init__(
         self,
         coordinator: WudCoordinator,
-        container_id: str,
+        container_key: str,
         entry: ConfigEntry,
     ) -> None:
         """Initialize the update entity."""
         super().__init__(coordinator)
-        self._container_id = container_id
-        self._entry_id = entry.entry_id
-        self._attr_unique_id = f"{entry.entry_id}_{container_id}"
+        self._container_key = container_key
+        self._entry = entry
+        self._attr_unique_id = f"{entry.entry_id}_{container_key}"
         self._attr_in_progress: bool | int = False
 
     def _container(self) -> dict[str, Any] | None:
         """Return the container data dict from the coordinator, or None."""
         if self.coordinator.data:
-            return self.coordinator.data.get(self._container_id)
+            return self.coordinator.data.get(self._container_key)
         return None
+
+    def _wud_id(self) -> str | None:
+        """Return the actual WUD container ID used for API calls."""
+        data = self._container()
+        return data.get("id") if data else None
 
     @property
     def available(self) -> bool:
@@ -78,14 +84,42 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
         return self.coordinator.last_update_success and self._container() is not None
 
     @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional container metadata as state attributes."""
+        data = self._container()
+        if not data:
+            return {}
+        image = data.get("image", {})
+        result = data.get("result") or {}
+        attrs: dict[str, Any] = {
+            "watcher": data.get("watcher"),
+            "container_id": data.get("id"),
+            "display_name": data.get("displayName"),
+            "image_name": image.get("name"),
+            "image_tag": image.get("tag", {}).get("value"),
+            "image_digest": image.get("digest", {}).get("value"),
+            "registry": image.get("registry", {}).get("url"),
+            "new_tag": result.get("tag"),
+            "new_digest": result.get("digest"),
+            "last_checked": data.get("updateDate"),
+        }
+        return {k: v for k, v in attrs.items() if v is not None}
+
+    @property
     def device_info(self) -> DeviceInfo:
         """Return device info for this container."""
         data = self._container() or {}
-        container_name = data.get("name", self._container_id)
+        container_name = data.get("name", self._container_key)
         watcher = data.get("watcher", "")
+        integration_name = (
+            self._entry.options.get(CONF_NAME) or self._entry.data.get(CONF_NAME, "")
+        )
+        display_name = (
+            f"{integration_name} {container_name}" if integration_name else container_name
+        )
         return DeviceInfo(
-            identifiers={(DOMAIN, f"{self._entry_id}_{self._container_id}")},
-            name=container_name,
+            identifiers={(DOMAIN, f"{self._entry.entry_id}_{self._container_key}")},
+            name=display_name,
             manufacturer="Docker",
             model=f"Container ({watcher})" if watcher else "Container",
             configuration_url=self.coordinator.url,
@@ -96,8 +130,8 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
         """Human-readable name shown in Settings > Updates."""
         data = self._container()
         if not data:
-            return self._container_id
-        return data.get("name", self._container_id)
+            return self._container_key
+        return data.get("name", self._container_key)
 
     @property
     def installed_version(self) -> str | None:
@@ -227,7 +261,7 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
         """Release notes are not supported by this integration."""
         return None
 
-    async def _async_wait_for_update(self) -> None:
+    async def _async_wait_for_update(self, wud_id: str) -> None:
         """Poll WUD until the container reports no pending update or timeout.
 
         Each cycle forces WUD to re-scan the image via the watch endpoint, then
@@ -239,10 +273,8 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
             await asyncio.sleep(INSTALL_POLL_INTERVAL)
             elapsed = (iteration + 1) * INSTALL_POLL_INTERVAL
             try:
-                await self.coordinator.async_watch_container(self._container_id)
-                data = await self.coordinator.async_get_single_container(
-                    self._container_id
-                )
+                await self.coordinator.async_watch_container(wud_id)
+                data = await self.coordinator.async_get_single_container(wud_id)
             except aiohttp.ClientError as err:
                 _LOGGER.debug(
                     "Poll %d/%d for '%s' failed: %s",
@@ -286,13 +318,16 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
         WUD so HA shows the updating state until the container is confirmed
         updated (or the timeout is reached).
         """
+        wud_id = self._wud_id()
+        if not wud_id:
+            _LOGGER.error("No WUD container ID available for '%s'", self._container_key)
+            return
+
         self._attr_in_progress = True
         self.async_write_ha_state()
 
         try:
-            triggers = await self.coordinator.async_get_container_triggers(
-                self._container_id
-            )
+            triggers = await self.coordinator.async_get_container_triggers(wud_id)
 
             if not triggers:
                 _LOGGER.info(
@@ -300,7 +335,7 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
                     "running a watch refresh instead",
                     self.title,
                 )
-                await self.coordinator.async_watch_container(self._container_id)
+                await self.coordinator.async_watch_container(wud_id)
             else:
                 chosen = next(
                     (t for t in triggers if t.get("type") in TRIGGER_TYPES_UPDATER),
@@ -313,12 +348,12 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
                     self.title,
                 )
                 await self.coordinator.async_run_trigger(
-                    self._container_id,
+                    wud_id,
                     chosen["type"],
                     chosen["name"],
                 )
 
-            await self._async_wait_for_update()
+            await self._async_wait_for_update(wud_id)
         except aiohttp.ClientError as err:
             _LOGGER.error(
                 "Failed to trigger update for container '%s': %s",

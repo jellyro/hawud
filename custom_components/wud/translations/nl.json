@@ -6,6 +6,7 @@
         "description": "Voer de verbindingsgegevens in voor uw WUD-instantie.",
         "data": {
           "url": "WUD URL",
+          "name": "Instantienaam (optioneel)",
           "username": "Gebruikersnaam (optioneel)",
           "password": "Wachtwoord of API-token (optioneel)",
           "verify_ssl": "TLS-certificaat verifiëren",
@@ -13,6 +14,7 @@
         },
         "data_description": {
           "url": "Basis-URL van uw WUD-instantie, bijv. http://192.168.1.10:3000 of https://wud.example.com",
+          "name": "Een naam om deze WUD-instantie te herkennen en entiteiten te prefixen, bijv. Thuisserver",
           "verify_ssl": "Schakel uit bij gebruik van een zelfondertekend certificaat achter een reverse proxy",
           "scan_interval": "Hoe vaak WUD moet worden gepolld voor container-updates (minimaal 60 s)"
         }

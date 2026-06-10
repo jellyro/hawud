@@ -6,6 +6,7 @@
         "description": "Introduceți detaliile de conexiune pentru instanța WUD.",
         "data": {
           "url": "URL WUD",
+          "name": "Numele instanței (opțional)",
           "username": "Nume utilizator (opțional)",
           "password": "Parolă sau token API (opțional)",
           "verify_ssl": "Verificare certificat TLS",
@@ -13,6 +14,7 @@
         },
         "data_description": {
           "url": "URL de bază al instanței WUD, de ex. http://192.168.1.10:3000 sau https://wud.example.com",
+          "name": "Un nume prietenos pentru a identifica această instanță WUD și a prefixa entitățile, ex. Server acasă",
           "verify_ssl": "Dezactivați când utilizați un certificat auto-semnat în spatele unui proxy invers",
           "scan_interval": "Cât de des să interogați WUD pentru actualizări de containere (minim 60 s)"
         }

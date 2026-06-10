@@ -6,6 +6,7 @@
         "description": "Geben Sie die Verbindungsdetails für Ihre WUD-Instanz ein.",
         "data": {
           "url": "WUD URL",
+          "name": "Instanzname (optional)",
           "username": "Benutzername (optional)",
           "password": "Passwort oder API-Token (optional)",
           "verify_ssl": "TLS-Zertifikat verifizieren",
@@ -13,6 +14,7 @@
         },
         "data_description": {
           "url": "Basis-URL Ihrer WUD-Instanz, z. B. http://192.168.1.10:3000 oder https://wud.example.com",
+          "name": "Ein freundlicher Name zur Identifizierung dieser WUD-Instanz, z. B. Heimserver",
           "verify_ssl": "Deaktivieren, wenn ein selbstsigniertes Zertifikat hinter einem Reverse Proxy verwendet wird",
           "scan_interval": "Wie oft WUD nach Container-Updates abgefragt werden soll (mindestens 60 s)"
         }

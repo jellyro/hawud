@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import logging
+import urllib.parse
 from typing import Any
 
 import aiohttp
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
@@ -51,6 +53,7 @@ _INTERVAL_SELECTOR = NumberSelector(
 STEP_USER_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_URL): _URL_SELECTOR,
+        vol.Optional(CONF_NAME, default=""): _TEXT_SELECTOR,
         vol.Optional(CONF_USERNAME, default=""): _TEXT_SELECTOR,
         vol.Optional(CONF_PASSWORD, default=""): _PASSWORD_SELECTOR,
         vol.Optional(CONF_VERIFY_SSL, default=DEFAULT_VERIFY_SSL): _BOOL_SELECTOR,
@@ -112,8 +115,14 @@ class WudConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
+            url = user_input[CONF_URL].rstrip("/")
+            parsed = urllib.parse.urlparse(url)
+            unique_id = parsed.netloc.lower()
+            await self.async_set_unique_id(unique_id)
+            self._abort_if_unique_id_configured()
+
             try:
-                title = await _validate_connection(self.hass, user_input)
+                url_title = await _validate_connection(self.hass, user_input)
             except _InvalidAuth:
                 errors["base"] = "invalid_auth"
             except aiohttp.ClientConnectionError:
@@ -124,11 +133,15 @@ class WudConfigFlow(ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception("Unexpected error during WUD config validation")
                 errors["base"] = "unknown"
             else:
+                custom_name = user_input.get(CONF_NAME, "").strip()
+                title = custom_name if custom_name else url_title
                 data: dict[str, Any] = {
-                    CONF_URL: user_input[CONF_URL].rstrip("/"),
+                    CONF_URL: url,
                     CONF_VERIFY_SSL: user_input.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL),
                     CONF_SCAN_INTERVAL: int(user_input[CONF_SCAN_INTERVAL]),
                 }
+                if custom_name:
+                    data[CONF_NAME] = custom_name
                 if user_input.get(CONF_USERNAME):
                     data[CONF_USERNAME] = user_input[CONF_USERNAME]
                 if user_input.get(CONF_PASSWORD):

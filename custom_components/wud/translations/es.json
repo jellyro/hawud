@@ -6,6 +6,7 @@
         "description": "Introduzca los detalles de conexión para su instancia WUD.",
         "data": {
           "url": "URL de WUD",
+          "name": "Nombre de instancia (opcional)",
           "username": "Nombre de usuario (opcional)",
           "password": "Contraseña o token de API (opcional)",
           "verify_ssl": "Verificar certificado TLS",
@@ -13,6 +14,7 @@
         },
         "data_description": {
           "url": "URL base de su instancia WUD, p. ej. http://192.168.1.10:3000 o https://wud.example.com",
+          "name": "Un nombre para identificar esta instancia WUD y prefijar sus entidades, p. ej. Servidor doméstico",
           "verify_ssl": "Desactivar al usar un certificado autofirmado detrás de un proxy inverso",
           "scan_interval": "Con qué frecuencia sondear WUD para actualizaciones de contenedores (mínimo 60 s)"
         }

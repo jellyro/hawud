@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 
 from .coordinator import WudCoordinator
 
-PLATFORMS: list[Platform] = [Platform.UPDATE]
+PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.UPDATE]
 
 WudConfigEntry: TypeAlias = ConfigEntry[WudCoordinator]
 
