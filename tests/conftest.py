@@ -56,4 +56,5 @@ def mock_coordinator():
     coord.async_run_trigger = AsyncMock()
     coord.async_request_refresh = AsyncMock()
     coord.async_set_updated_data = MagicMock()
+    coord.update_semaphore = None
     return coord

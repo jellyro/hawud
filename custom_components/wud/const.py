@@ -18,3 +18,6 @@ TRIGGER_TYPES_UPDATER = frozenset({"docker", "compose", "dockercompose"})
 
 INSTALL_TIMEOUT = 600  # seconds (10 minutes)
 INSTALL_POLL_INTERVAL = 15  # seconds (15 seconds)
+
+CONF_MAX_CONCURRENT_UPDATES = "max_concurrent_updates"
+DEFAULT_MAX_CONCURRENT_UPDATES = 0  # 0 = unlimited

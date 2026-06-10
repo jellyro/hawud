@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from contextlib import nullcontext
 from datetime import time as dt_time
 from typing import Any
 
@@ -200,23 +201,25 @@ class WudAutoUpdateSwitch(CoordinatorEntity[WudCoordinator], SwitchEntity, Resto
 
     async def _async_run_install(self, wud_id: str, container_name: str) -> None:
         """Invoke WUD triggers for the container, then request a coordinator refresh."""
+        semaphore = self.coordinator.update_semaphore
         try:
-            triggers = await self.coordinator.async_get_container_triggers(wud_id)
-            if not triggers:
-                await self.coordinator.async_watch_container(wud_id)
-            else:
-                chosen = next(
-                    (t for t in triggers if t.get("type") in TRIGGER_TYPES_UPDATER),
-                    triggers[0],
-                )
-                _LOGGER.debug(
-                    "Auto-update: running trigger '%s/%s' for '%s'",
-                    chosen["type"],
-                    chosen["name"],
-                    container_name,
-                )
-                await self.coordinator.async_run_trigger(
-                    wud_id, chosen["type"], chosen["name"]
-                )
+            async with (semaphore if semaphore is not None else nullcontext()):
+                triggers = await self.coordinator.async_get_container_triggers(wud_id)
+                if not triggers:
+                    await self.coordinator.async_watch_container(wud_id)
+                else:
+                    chosen = next(
+                        (t for t in triggers if t.get("type") in TRIGGER_TYPES_UPDATER),
+                        triggers[0],
+                    )
+                    _LOGGER.debug(
+                        "Auto-update: running trigger '%s/%s' for '%s'",
+                        chosen["type"],
+                        chosen["name"],
+                        container_name,
+                    )
+                    await self.coordinator.async_run_trigger(
+                        wud_id, chosen["type"], chosen["name"]
+                    )
         finally:
             await self.coordinator.async_request_refresh()

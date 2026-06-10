@@ -42,10 +42,12 @@
       "init": {
         "title": "Opciones de What's Up Docker",
         "data": {
-          "scan_interval": "Intervalo de sondeo (segundos)"
+          "scan_interval": "Intervalo de sondeo (segundos)",
+          "max_concurrent_updates": "Actualizaciones simultaneas maximas (0 = sin limite)"
         },
         "data_description": {
-          "scan_interval": "Con qué frecuencia sondear WUD para actualizaciones de contenedores (mínimo 60 s)"
+          "scan_interval": "Con qué frecuencia sondear WUD para actualizaciones de contenedores (mínimo 60 s)",
+          "max_concurrent_updates": "Número máximo de contenedores que se pueden actualizar al mismo tiempo. 0 significa sin límite. Las actualizaciones adicionales se ponen en cola."
         }
       }
     }

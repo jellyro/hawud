@@ -1,6 +1,7 @@
 """DataUpdateCoordinator and WUD API client for What's Up Docker."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import time as dt_time, timedelta
 from typing import Any
@@ -13,11 +14,13 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
+    CONF_MAX_CONCURRENT_UPDATES,
     CONF_PASSWORD,
     CONF_SCAN_INTERVAL,
     CONF_URL,
     CONF_USERNAME,
     CONF_VERIFY_SSL,
+    DEFAULT_MAX_CONCURRENT_UPDATES,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_VERIFY_SSL,
     DOMAIN,
@@ -44,6 +47,16 @@ class WudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._verify_ssl: bool = entry.data.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL)
         self._auto_update_times: dict[str, dt_time | None] = {}
 
+        max_concurrent = int(
+            entry.options.get(
+                CONF_MAX_CONCURRENT_UPDATES,
+                entry.data.get(CONF_MAX_CONCURRENT_UPDATES, DEFAULT_MAX_CONCURRENT_UPDATES),
+            )
+        )
+        self._update_semaphore: asyncio.Semaphore | None = (
+            asyncio.Semaphore(max_concurrent) if max_concurrent > 0 else None
+        )
+
         scan_interval = entry.options.get(
             CONF_SCAN_INTERVAL,
             entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
@@ -55,6 +68,11 @@ class WudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             name=DOMAIN,
             update_interval=timedelta(seconds=scan_interval),
         )
+
+    @property
+    def update_semaphore(self) -> asyncio.Semaphore | None:
+        """Return the semaphore limiting concurrent updates, or None for unlimited."""
+        return self._update_semaphore
 
     def get_auto_update_time(self, container_key: str) -> dt_time | None:
         """Return the scheduled auto-update time for a container, or None."""

@@ -42,10 +42,12 @@
       "init": {
         "title": "What's Up Docker opties",
         "data": {
-          "scan_interval": "Poll-interval (seconden)"
+          "scan_interval": "Poll-interval (seconden)",
+          "max_concurrent_updates": "Max gelijktijdige updates (0 = onbeperkt)"
         },
         "data_description": {
-          "scan_interval": "Hoe vaak WUD moet worden gepolld voor container-updates (minimaal 60 s)"
+          "scan_interval": "Hoe vaak WUD moet worden gepolld voor container-updates (minimaal 60 s)",
+          "max_concurrent_updates": "Maximum aantal containers dat tegelijkertijd kan worden bijgewerkt. 0 betekent geen limiet. Extra updates worden in de wachtrij geplaatst."
         }
       }
     }

@@ -22,11 +22,13 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
+    CONF_MAX_CONCURRENT_UPDATES,
     CONF_PASSWORD,
     CONF_SCAN_INTERVAL,
     CONF_URL,
     CONF_USERNAME,
     CONF_VERIFY_SSL,
+    DEFAULT_MAX_CONCURRENT_UPDATES,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_VERIFY_SSL,
     DOMAIN,
@@ -47,6 +49,14 @@ _INTERVAL_SELECTOR = NumberSelector(
         step=1,
         mode=NumberSelectorMode.BOX,
         unit_of_measurement="s",
+    )
+)
+_MAX_CONCURRENT_SELECTOR = NumberSelector(
+    NumberSelectorConfig(
+        min=0,
+        max=10,
+        step=1,
+        mode=NumberSelectorMode.BOX,
     )
 )
 
@@ -224,12 +234,23 @@ class WudOptionsFlow(OptionsFlow):
         """Manage options."""
         if user_input is not None:
             return self.async_create_entry(
-                data={CONF_SCAN_INTERVAL: int(user_input[CONF_SCAN_INTERVAL])}
+                data={
+                    CONF_SCAN_INTERVAL: int(user_input[CONF_SCAN_INTERVAL]),
+                    CONF_MAX_CONCURRENT_UPDATES: int(
+                        user_input[CONF_MAX_CONCURRENT_UPDATES]
+                    ),
+                }
             )
 
         current_interval = self.config_entry.options.get(
             CONF_SCAN_INTERVAL,
             self.config_entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+        )
+        current_max_concurrent = self.config_entry.options.get(
+            CONF_MAX_CONCURRENT_UPDATES,
+            self.config_entry.data.get(
+                CONF_MAX_CONCURRENT_UPDATES, DEFAULT_MAX_CONCURRENT_UPDATES
+            ),
         )
 
         return self.async_show_form(
@@ -239,6 +260,9 @@ class WudOptionsFlow(OptionsFlow):
                     vol.Optional(
                         CONF_SCAN_INTERVAL, default=current_interval
                     ): _INTERVAL_SELECTOR,
+                    vol.Optional(
+                        CONF_MAX_CONCURRENT_UPDATES, default=current_max_concurrent
+                    ): _MAX_CONCURRENT_SELECTOR,
                 }
             ),
         )
