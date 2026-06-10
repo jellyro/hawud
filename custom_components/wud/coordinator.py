@@ -108,6 +108,27 @@ class WudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         ) as resp:
             resp.raise_for_status()
 
+    async def async_get_single_container(
+        self, container_id: str
+    ) -> dict[str, Any] | None:
+        """Fetch the current state of a single container from the WUD API."""
+        session = async_get_clientsession(self.hass, verify_ssl=self._verify_ssl)
+        try:
+            async with session.get(
+                f"{self.url}/api/containers/{container_id}",
+                auth=self._auth,
+                timeout=aiohttp.ClientTimeout(total=30),
+            ) as resp:
+                if resp.status == 404:
+                    return None
+                resp.raise_for_status()
+                return await resp.json()
+        except aiohttp.ClientError as err:
+            _LOGGER.debug(
+                "Failed to fetch single container %s: %s", container_id, err
+            )
+            return None
+
     async def async_watch_container(self, container_id: str) -> dict[str, Any]:
         """Trigger a manual image watch on a specific container."""
         session = async_get_clientsession(self.hass, verify_ssl=self._verify_ssl)

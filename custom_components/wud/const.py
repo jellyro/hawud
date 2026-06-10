@@ -15,3 +15,6 @@ CONF_VERIFY_SSL = "verify_ssl"
 DEFAULT_VERIFY_SSL = True
 
 TRIGGER_TYPES_UPDATER = frozenset({"docker", "compose", "dockercompose"})
+
+INSTALL_TIMEOUT = 600  # seconds (10 minutes)
+INSTALL_POLL_INTERVAL = 15  # seconds (15 seconds)

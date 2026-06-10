@@ -1,6 +1,7 @@
 """Update entity platform for What's Up Docker."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
@@ -12,7 +13,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, TRIGGER_TYPES_UPDATER
+from .const import DOMAIN, INSTALL_POLL_INTERVAL, INSTALL_TIMEOUT, TRIGGER_TYPES_UPDATER
 from .coordinator import WudCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -226,6 +227,54 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
         """Release notes are not supported by this integration."""
         return None
 
+    async def _async_wait_for_update(self) -> None:
+        """Poll WUD until the container reports no pending update or timeout.
+
+        Each cycle forces WUD to re-scan the image via the watch endpoint, then
+        reads back the container state.  Exits early as soon as updateAvailable
+        is False, or after INSTALL_TIMEOUT seconds.
+        """
+        iterations = INSTALL_TIMEOUT // INSTALL_POLL_INTERVAL
+        for iteration in range(iterations):
+            await asyncio.sleep(INSTALL_POLL_INTERVAL)
+            elapsed = (iteration + 1) * INSTALL_POLL_INTERVAL
+            try:
+                await self.coordinator.async_watch_container(self._container_id)
+                data = await self.coordinator.async_get_single_container(
+                    self._container_id
+                )
+            except aiohttp.ClientError as err:
+                _LOGGER.debug(
+                    "Poll %d/%d for '%s' failed: %s",
+                    iteration + 1,
+                    iterations,
+                    self.title,
+                    err,
+                )
+                continue
+
+            if data is not None and not data.get("updateAvailable", True):
+                _LOGGER.info(
+                    "Container '%s' update confirmed after %d s",
+                    self.title,
+                    elapsed,
+                )
+                return
+
+            _LOGGER.debug(
+                "Container '%s' still updating — %d/%d s elapsed",
+                self.title,
+                elapsed,
+                INSTALL_TIMEOUT,
+            )
+
+        _LOGGER.warning(
+            "Update timed out after %d s for container '%s'; "
+            "the container may still be updating in the background",
+            INSTALL_TIMEOUT,
+            self.title,
+        )
+
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
     ) -> None:
@@ -233,7 +282,9 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
 
         Prefers docker/compose triggers (which actually recreate the container)
         over notification-only triggers. Falls back to a manual watch refresh
-        when no triggers are configured.
+        when no triggers are configured.  Keeps in_progress=True while polling
+        WUD so HA shows the updating state until the container is confirmed
+        updated (or the timeout is reached).
         """
         self._attr_in_progress = True
         self.async_write_ha_state()
@@ -266,6 +317,8 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
                     chosen["type"],
                     chosen["name"],
                 )
+
+            await self._async_wait_for_update()
         except aiohttp.ClientError as err:
             _LOGGER.error(
                 "Failed to trigger update for container '%s': %s",
@@ -274,4 +327,5 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
             )
         finally:
             self._attr_in_progress = False
+            self.async_write_ha_state()
             await self.coordinator.async_request_refresh()
