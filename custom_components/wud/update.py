@@ -140,6 +140,84 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
         result = data.get("result") or {}
         return result.get("link")
 
+    @property
+    def icon(self) -> str:
+        """Return the icon for the container based on its image name."""
+        data = self._container()
+        if not data:
+            return "mdi:docker"
+
+        image = data.get("image", {})
+        image_name = image.get("name", "").lower()
+
+        # Map common container images to appropriate icons
+        icon_mapping = {
+            # Home Assistant
+            "homeassistant": "mdi:home-assistant",
+            # Databases
+            "postgres": "mdi:database",
+            "mysql": "mdi:database",
+            "mariadb": "mdi:database",
+            "mongodb": "mdi:database",
+            "redis": "mdi:database",
+            "influxdb": "mdi:chart-line",
+            # Media servers
+            "plex": "mdi:plex",
+            "jellyfin": "mdi:play-box-multiple",
+            "emby": "mdi:play-box-multiple",
+            "radarr": "mdi:filmstrip",
+            "sonarr": "mdi:television",
+            "lidarr": "mdi:music",
+            "bazarr": "mdi:subtitles",
+            "prowlarr": "mdi:magnify",
+            # Download clients
+            "transmission": "mdi:download",
+            "deluge": "mdi:download",
+            "qbittorrent": "mdi:download",
+            "nzbget": "mdi:download",
+            "sabnzbd": "mdi:download",
+            # Home automation
+            "zigbee2mqtt": "mdi:zigbee",
+            "mosquitto": "mdi:server-network",
+            "node-red": "mdi:nodejs",
+            # Monitoring
+            "prometheus": "mdi:chart-box",
+            "grafana": "mdi:chart-line",
+            "portainer": "mdi:docker",
+            "watchtower": "mdi:autorenew",
+            "ouroboros": "mdi:autorenew",
+            # Web servers
+            "nginx": "mdi:server",
+            "apache": "mdi:server",
+            "traefik": "mdi:router",
+            "caddy": "mdi:server",
+            # Network
+            "pihole": "mdi:shield-check",
+            "adguard": "mdi:shield-check",
+            "cloudflared": "mdi:cloud",
+            "wireguard": "mdi:vpn",
+            "openvpn": "mdi:vpn",
+            # Storage
+            "nextcloud": "mdi:cloud",
+            "syncthing": "mdi:sync",
+            # Other common services
+            "vaultwarden": "mdi:shield-key",
+            "bitwarden": "mdi:shield-key",
+            "paperlessngx": "mdi:file-document",
+            "paperless": "mdi:file-document",
+            "immich": "mdi:image",
+            "homebox": "mdi:package-variant",
+            "changedetection": "mdi:eye",
+            "uptime-kuma": "mdi:pulse",
+            "dozzle": "mdi:docker",
+        }
+
+        for key, icon in icon_mapping.items():
+            if key in image_name:
+                return icon
+
+        return "mdi:docker"
+
     def install(self, version: str | None, backup: bool, **kwargs: Any) -> None:
         """Sync install not used; updates are handled via async_install."""
         raise NotImplementedError
