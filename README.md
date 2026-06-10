@@ -100,3 +100,5 @@ This is a third-party Home Assistant integration for [What's Up Docker](https://
 WUD is developed by [Manfred Martin](https://github.com/fmartinou) and is licensed under the [MIT License](https://github.com/fmartinou/whats-up-docker/blob/master/LICENSE).
 
 This integration is not affiliated with or endorsed by the WUD project.
+
+The integration icon is sourced from [Dashboard Icons](https://github.com/homarr-labs/dashboard-icons), licensed under the [Apache-2.0 License](https://github.com/homarr-labs/dashboard-icons/blob/main/LICENSE).
