@@ -126,6 +126,21 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
         )
 
     @property
+    def entity_picture(self) -> str | None:
+        """Return a container icon URL from the walkxcode dashboard-icons CDN."""
+        data = self._container()
+        if not data:
+            return None
+        image = data.get("image", {})
+        raw: str = image.get("name") or data.get("name", "")
+        slug = (
+            raw.split("/")[-1].split(":")[0].split("@")[0].lower().replace("_", "-")
+        )
+        if not slug:
+            return None
+        return f"https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/{slug}.png"
+
+    @property
     def title(self) -> str:
         """Human-readable name shown in Settings > Updates."""
         data = self._container()

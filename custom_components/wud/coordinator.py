@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
+from datetime import time as dt_time, timedelta
 from typing import Any
 
 import aiohttp
@@ -42,6 +42,7 @@ class WudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._auth = aiohttp.BasicAuth(username or "", password or "")
 
         self._verify_ssl: bool = entry.data.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL)
+        self._auto_update_times: dict[str, dt_time | None] = {}
 
         scan_interval = entry.options.get(
             CONF_SCAN_INTERVAL,
@@ -54,6 +55,14 @@ class WudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             name=DOMAIN,
             update_interval=timedelta(seconds=scan_interval),
         )
+
+    def get_auto_update_time(self, container_key: str) -> dt_time | None:
+        """Return the scheduled auto-update time for a container, or None."""
+        return self._auto_update_times.get(container_key)
+
+    def set_auto_update_time(self, container_key: str, value: dt_time | None) -> None:
+        """Store the scheduled auto-update time for a container."""
+        self._auto_update_times[container_key] = value
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch all container data from the WUD API."""
