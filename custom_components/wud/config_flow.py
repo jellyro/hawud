@@ -120,7 +120,7 @@ class WudConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
             except aiohttp.ClientResponseError:
                 errors["base"] = "cannot_connect"
-            except Exception:
+            except Exception:  # noqa: BLE001  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected error during WUD config validation")
                 errors["base"] = "unknown"
             else:
@@ -143,7 +143,7 @@ class WudConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_reauth(
-        self, entry_data: dict[str, Any]
+        self, _entry_data: dict[str, Any]
     ) -> ConfigFlowResult:
         """Handle re-authentication when credentials become invalid."""
         return await self.async_step_reauth_confirm()
@@ -163,7 +163,7 @@ class WudConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_auth"
             except aiohttp.ClientError:
                 errors["base"] = "cannot_connect"
-            except Exception:
+            except Exception:  # noqa: BLE001  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected error during WUD re-auth")
                 errors["base"] = "unknown"
             else:
@@ -190,6 +190,10 @@ class WudConfigFlow(ConfigFlow, domain=DOMAIN):
                 CONF_URL: reauth_entry.data.get(CONF_URL, "")
             },
         )
+
+    def is_matching(self, other_flow: WudConfigFlow) -> bool:
+        """Return False; user-initiated flows are deduplicated via unique_id."""
+        return False
 
     @staticmethod
     @callback

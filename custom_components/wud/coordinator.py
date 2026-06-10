@@ -70,8 +70,6 @@ class WudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     )
                 resp.raise_for_status()
                 containers: list[dict[str, Any]] = await resp.json()
-        except ConfigEntryAuthFailed:
-            raise
         except aiohttp.ClientError as err:
             raise UpdateFailed(f"Error communicating with WUD API: {err}") from err
 

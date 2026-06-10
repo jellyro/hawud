@@ -19,7 +19,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
+    _hass: HomeAssistant,
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
@@ -92,7 +92,7 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
 
     @property
     def title(self) -> str:
-        """Human-readable name shown in Settings → Updates."""
+        """Human-readable name shown in Settings > Updates."""
         data = self._container()
         if not data:
             return self._container_id
@@ -139,6 +139,14 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
             return None
         result = data.get("result") or {}
         return result.get("link")
+
+    def install(self, version: str | None, backup: bool, **kwargs: Any) -> None:
+        """Sync install not used; updates are handled via async_install."""
+        raise NotImplementedError
+
+    def release_notes(self) -> str | None:
+        """Release notes are not supported by this integration."""
+        return None
 
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
