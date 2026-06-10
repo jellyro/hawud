@@ -43,11 +43,25 @@
         "title": "Opțiuni What's Up Docker",
         "data": {
           "scan_interval": "Interval de interogare (secunde)",
-          "max_concurrent_updates": "Actualizari simultane maxime (0 = nelimitat)"
+          "max_concurrent_updates": "Actualizari simultane maxime (0 = nelimitat)",
+          "auto_update_time": "Ora de actualizare a integrarii"
         },
         "data_description": {
           "scan_interval": "Cât de des să interogați WUD pentru actualizări de containere (minim 60 s)",
-          "max_concurrent_updates": "Numărul maxim de containere care pot fi actualizate simultan. 0 înseamnă fără limită. Actualizările suplimentare sunt puse în coadă."
+          "max_concurrent_updates": "Numărul maxim de containere care pot fi actualizate simultan. 0 înseamnă fără limită. Actualizările suplimentare sunt puse în coadă.",
+          "auto_update_time": "Ora implicită la care se aplică actualizările automate când un container este setat pe 'Ora de actualizare a integrarii'"
+        }
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "auto_update": {
+        "state": {
+          "never": "Niciodată",
+          "immediately": "Imediat",
+          "integration_update_time": "Ora de actualizare a integrării",
+          "container_update_time": "Ora de actualizare a containerului"
         }
       }
     }

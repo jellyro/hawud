@@ -27,7 +27,7 @@ Go to Settings > Devices and Services > Add Integration and search for What's Up
 | Verify TLS certificate | Yes | Disable for self-signed certs behind a reverse proxy |
 | Poll interval | Yes | How often to check for updates in seconds, default 300 |
 
-The poll interval and max concurrent updates can be changed later via Settings > Devices and Services > What's Up Docker Integration > Configure.
+The poll interval, max concurrent updates, and integration update time can be changed later via Settings > Devices and Services > What's Up Docker Integration > Configure.
 
 ## Recommended Setup
 
@@ -35,9 +35,9 @@ The recommended approach is to run your containers with Docker Compose and let H
 
 1. Run your containers with Docker Compose.
 2. In WUD, configure a Compose trigger for each container. This allows WUD to recreate a container with the new image when asked.
-3. Do not enable auto-update in WUD itself. Instead, use the Auto update switch entities provided by this integration to control which containers update automatically and when.
+3. Do not enable auto-update in WUD itself. Instead, use the Auto update select entities provided by this integration to control which containers update automatically and when.
 
-This gives you full control from Home Assistant. You can target specific containers, create automations with conditions, set a daily maintenance window using the Auto update time entity, limit how many containers update at the same time, and get notified through standard HA notification channels.
+This gives you full control from Home Assistant. You can target specific containers, create automations with conditions, set a daily maintenance window, limit how many containers update at the same time, and get notified through standard HA notification channels.
 
 ## Entities
 
@@ -47,20 +47,27 @@ Each discovered container creates a device with four entities.
 |---|---|---|
 | update.[name] | Update | Shows installed vs. latest version and supports Install |
 | button.[name]_check_for_updates | Button | Asks WUD to re-check for a newer image immediately |
-| switch.[name]_auto_update | Switch | When on, automatically installs available updates |
-| time.[name]_auto_update_time | Time | Optional daily time at which auto-updates are triggered |
+| select.[name]_auto_update | Select | Controls when automatic updates are applied (see modes below) |
+| time.[name]_auto_update_time | Time | Per-container time override used when mode is set to Container Update Time |
 
-### Auto update behavior
+### Auto update modes
 
-The auto-update switch and optional time entity work together per container.
+Each container has an **Auto update** select entity with four options.
 
-- Switch off: no automatic action is taken. Updates are shown in the Update entity but not applied.
-- Switch on, no time set: the update is triggered on the next poll after it is detected.
-- Switch on, time set: the update is triggered only at or after the configured time on the day it is detected. If the poll runs before that time, the update waits until the next poll after the scheduled time.
+| Option | Behavior |
+|---|---|
+| Never | No automatic action. Updates are shown in the Update entity but never applied automatically. This is the default. |
+| Immediately | The update is triggered on the next poll after it is detected, with no time restriction. |
+| Integration Update Time | The update is triggered at or after the time configured under Configure > Integration update time (default: 05:00). |
+| Container Update Time | The update is triggered at or after the time set on the per-container time entity. Falls back to the integration update time when no container time has been set. |
 
-Each version is only triggered once per container. If a new version becomes available after an update, the switch triggers again for the new version. When a time is configured, the switch also triggers again on the next day if the container still reports an update.
+Each version is only triggered once per container per day (for timed modes) or once total (for Immediately). If a new version becomes available, the trigger fires again for the new version.
 
 State is preserved across Home Assistant restarts.
+
+### Integration update time
+
+In the options dialog (Configure), you can set the **Integration update time** — a single time of day that applies to all containers using the *Integration Update Time* mode. The default is 05:00. Each container can further override this with its own per-container time entity when using *Container Update Time* mode.
 
 ### Max concurrent updates
 

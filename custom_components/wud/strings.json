@@ -40,10 +40,24 @@
       "init": {
         "title": "What's Up Docker options",
         "data": {
-          "scan_interval": "Poll interval (seconds)"
+          "scan_interval": "Poll interval (seconds)",
+          "auto_update_time": "Integration update time"
         },
         "data_description": {
-          "scan_interval": "How often to poll WUD for container updates (minimum 60 s)"
+          "scan_interval": "How often to poll WUD for container updates (minimum 60 s)",
+          "auto_update_time": "Default time of day at which automatic updates are applied when a container is set to 'Integration Update Time'"
+        }
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "auto_update": {
+        "state": {
+          "never": "Never",
+          "immediately": "Immediately",
+          "integration_update_time": "Integration Update Time",
+          "container_update_time": "Container Update Time"
         }
       }
     }

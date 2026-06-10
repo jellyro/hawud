@@ -1,6 +1,7 @@
 """Shared fixtures for WUD integration tests."""
 from __future__ import annotations
 
+from datetime import time as dt_time
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -51,6 +52,7 @@ def mock_coordinator():
     coord.url = "http://wud:3000"
     coord.get_auto_update_time = MagicMock(return_value=None)
     coord.set_auto_update_time = MagicMock()
+    coord.get_integration_auto_update_time = MagicMock(return_value=dt_time(5, 0))
     coord.async_watch_container = AsyncMock(return_value={"id": "container-abc", "name": "freshrss"})
     coord.async_get_container_triggers = AsyncMock(return_value=[])
     coord.async_run_trigger = AsyncMock()

@@ -43,11 +43,25 @@
         "title": "What's Up Docker opties",
         "data": {
           "scan_interval": "Poll-interval (seconden)",
-          "max_concurrent_updates": "Max gelijktijdige updates (0 = onbeperkt)"
+          "max_concurrent_updates": "Max gelijktijdige updates (0 = onbeperkt)",
+          "auto_update_time": "Integratieactualiseringstijd"
         },
         "data_description": {
           "scan_interval": "Hoe vaak WUD moet worden gepolld voor container-updates (minimaal 60 s)",
-          "max_concurrent_updates": "Maximum aantal containers dat tegelijkertijd kan worden bijgewerkt. 0 betekent geen limiet. Extra updates worden in de wachtrij geplaatst."
+          "max_concurrent_updates": "Maximum aantal containers dat tegelijkertijd kan worden bijgewerkt. 0 betekent geen limiet. Extra updates worden in de wachtrij geplaatst.",
+          "auto_update_time": "Standaardtijd waarop automatische updates worden toegepast wanneer een container is ingesteld op 'Integratieactualiseringstijd'"
+        }
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "auto_update": {
+        "state": {
+          "never": "Nooit",
+          "immediately": "Onmiddellijk",
+          "integration_update_time": "Integratieactualiseringstijd",
+          "container_update_time": "Containeractualiseringstijd"
         }
       }
     }

@@ -43,11 +43,25 @@
         "title": "Options de What's Up Docker",
         "data": {
           "scan_interval": "Intervalle de sondage (secondes)",
-          "max_concurrent_updates": "Mises à jour simultanées max (0 = illimité)"
+          "max_concurrent_updates": "Mises à jour simultanées max (0 = illimité)",
+          "auto_update_time": "Heure de mise à jour de l'intégration"
         },
         "data_description": {
           "scan_interval": "Fréquence à laquelle sonder WUD pour les mises à jour de conteneurs (minimum 60 s)",
-          "max_concurrent_updates": "Nombre maximum de conteneurs mis à jour en même temps. 0 signifie aucune limite. Les mises à jour supplémentaires sont mises en file d'attente."
+          "max_concurrent_updates": "Nombre maximum de conteneurs mis à jour en même temps. 0 signifie aucune limite. Les mises à jour supplémentaires sont mises en file d'attente.",
+          "auto_update_time": "Heure par défaut à laquelle les mises à jour automatiques sont appliquées lorsqu'un conteneur est réglé sur 'Heure de mise à jour de l'intégration'"
+        }
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "auto_update": {
+        "state": {
+          "never": "Jamais",
+          "immediately": "Immédiatement",
+          "integration_update_time": "Heure de mise à jour de l'intégration",
+          "container_update_time": "Heure de mise à jour du conteneur"
         }
       }
     }

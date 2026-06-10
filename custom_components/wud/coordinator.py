@@ -14,12 +14,14 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
+    CONF_AUTO_UPDATE_TIME,
     CONF_MAX_CONCURRENT_UPDATES,
     CONF_PASSWORD,
     CONF_SCAN_INTERVAL,
     CONF_URL,
     CONF_USERNAME,
     CONF_VERIFY_SSL,
+    DEFAULT_AUTO_UPDATE_TIME,
     DEFAULT_MAX_CONCURRENT_UPDATES,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_VERIFY_SSL,
@@ -81,6 +83,18 @@ class WudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def set_auto_update_time(self, container_key: str, value: dt_time | None) -> None:
         """Store the scheduled auto-update time for a container."""
         self._auto_update_times[container_key] = value
+
+    def get_integration_auto_update_time(self) -> dt_time:
+        """Return the integration-level scheduled auto-update time from options."""
+        time_str: str = self.config_entry.options.get(
+            CONF_AUTO_UPDATE_TIME,
+            self.config_entry.data.get(CONF_AUTO_UPDATE_TIME, DEFAULT_AUTO_UPDATE_TIME),
+        )
+        try:
+            parts = str(time_str).split(":")
+            return dt_time(int(parts[0]), int(parts[1]))
+        except (ValueError, IndexError):
+            return dt_time(5, 0)
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch all container data from the WUD API."""

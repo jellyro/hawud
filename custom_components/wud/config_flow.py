@@ -19,15 +19,18 @@ from homeassistant.helpers.selector import (
     TextSelector,
     TextSelectorConfig,
     TextSelectorType,
+    TimeSelector,
 )
 
 from .const import (
+    CONF_AUTO_UPDATE_TIME,
     CONF_MAX_CONCURRENT_UPDATES,
     CONF_PASSWORD,
     CONF_SCAN_INTERVAL,
     CONF_URL,
     CONF_USERNAME,
     CONF_VERIFY_SSL,
+    DEFAULT_AUTO_UPDATE_TIME,
     DEFAULT_MAX_CONCURRENT_UPDATES,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_VERIFY_SSL,
@@ -59,6 +62,7 @@ _MAX_CONCURRENT_SELECTOR = NumberSelector(
         mode=NumberSelectorMode.BOX,
     )
 )
+_TIME_SELECTOR = TimeSelector()
 
 STEP_USER_SCHEMA = vol.Schema(
     {
@@ -239,6 +243,7 @@ class WudOptionsFlow(OptionsFlow):
                     CONF_MAX_CONCURRENT_UPDATES: int(
                         user_input[CONF_MAX_CONCURRENT_UPDATES]
                     ),
+                    CONF_AUTO_UPDATE_TIME: user_input[CONF_AUTO_UPDATE_TIME],
                 }
             )
 
@@ -252,6 +257,10 @@ class WudOptionsFlow(OptionsFlow):
                 CONF_MAX_CONCURRENT_UPDATES, DEFAULT_MAX_CONCURRENT_UPDATES
             ),
         )
+        current_auto_update_time = self.config_entry.options.get(
+            CONF_AUTO_UPDATE_TIME,
+            self.config_entry.data.get(CONF_AUTO_UPDATE_TIME, DEFAULT_AUTO_UPDATE_TIME),
+        )
 
         return self.async_show_form(
             step_id="init",
@@ -263,6 +272,9 @@ class WudOptionsFlow(OptionsFlow):
                     vol.Optional(
                         CONF_MAX_CONCURRENT_UPDATES, default=current_max_concurrent
                     ): _MAX_CONCURRENT_SELECTOR,
+                    vol.Optional(
+                        CONF_AUTO_UPDATE_TIME, default=current_auto_update_time
+                    ): _TIME_SELECTOR,
                 }
             ),
         )

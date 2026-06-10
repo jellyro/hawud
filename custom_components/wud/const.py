@@ -20,4 +20,12 @@ INSTALL_TIMEOUT = 600  # seconds (10 minutes)
 INSTALL_POLL_INTERVAL = 15  # seconds (15 seconds)
 
 CONF_MAX_CONCURRENT_UPDATES = "max_concurrent_updates"
-DEFAULT_MAX_CONCURRENT_UPDATES = 0  # 0 = unlimited
+DEFAULT_MAX_CONCURRENT_UPDATES = 2  # 0 = unlimited
+
+CONF_AUTO_UPDATE_TIME = "auto_update_time"
+DEFAULT_AUTO_UPDATE_TIME = "05:00"
+
+AUTO_UPDATE_NEVER = "never"
+AUTO_UPDATE_IMMEDIATELY = "immediately"
+AUTO_UPDATE_INTEGRATION_TIME = "integration_update_time"
+AUTO_UPDATE_CONTAINER_TIME = "container_update_time"
