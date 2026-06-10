@@ -1,5 +1,5 @@
 {
-  "domain": "hawud",
+  "domain": "wud",
   "name": "What's Up Docker Integration",
   "integration_type": "hub",
   "config_flow": true,
