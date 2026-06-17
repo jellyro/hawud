@@ -111,9 +111,30 @@ def test_latest_version_returns_new_tag_when_update_available(mock_coordinator, 
     assert entity.latest_version == "1.30.0"
 
 
-def test_latest_version_returns_digest_when_no_tag(mock_coordinator, mock_entry):
-    """latest_version returns the result digest when no tag is present in the update result."""
+def test_latest_version_appends_short_digest_for_digest_update(mock_coordinator, mock_entry):
+    """For a digest-only update (tag unchanged), latest_version appends a short digest.
+
+    This is the common case for moving tags like ``latest``: WUD keeps the same
+    tag but reports a new digest. Without the digest suffix, installed_version
+    and latest_version would be identical and Home Assistant would not show the
+    update.
+    """
     mock_coordinator.data = {"local_freshrss": CONTAINER_DIGEST_UPDATE}
+    entity = _make_entity(mock_coordinator, mock_entry)
+    assert entity.installed_version == "1.29.1"
+    assert entity.latest_version == "1.29.1 (newdigest)"
+    assert entity.latest_version != entity.installed_version
+
+
+def test_latest_version_returns_raw_digest_when_no_tag(mock_coordinator, mock_entry):
+    """latest_version returns the raw digest when the image has no tag at all."""
+    mock_coordinator.data = {
+        "local_freshrss": {
+            **CONTAINER_DIGEST_UPDATE,
+            "image": {"name": "freshrss/freshrss", "digest": {"repo": "sha256:aaa"}},
+            "result": {"digest": "sha256:newdigest"},
+        }
+    }
     entity = _make_entity(mock_coordinator, mock_entry)
     assert entity.latest_version == "sha256:newdigest"
 

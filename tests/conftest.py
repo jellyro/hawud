@@ -29,7 +29,12 @@ CONTAINER_WITH_UPDATE = {
 CONTAINER_DIGEST_UPDATE = {
     **CONTAINER_NO_UPDATE,
     "updateAvailable": True,
-    "result": {"digest": "sha256:newdigest"},
+    "result": {"tag": "1.29.1", "digest": "sha256:newdigest"},
+    "updateKind": {
+        "kind": "digest",
+        "localValue": "sha256:aaa",
+        "remoteValue": "sha256:newdigest",
+    },
 }
 
 

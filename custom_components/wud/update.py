@@ -20,6 +20,15 @@ from .coordinator import WudCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
+def _short_digest(digest: str) -> str:
+    """Return a short, human-readable form of an image digest.
+
+    Strips any algorithm prefix (e.g. ``sha256:``) and truncates to the first
+    12 characters, mirroring how Docker abbreviates digests.
+    """
+    return digest.split(":")[-1][:12]
+
+
 async def async_setup_entry(
     _hass: HomeAssistant,
     entry: ConfigEntry,
@@ -162,7 +171,8 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
 
     @property
     def latest_version(self) -> str | None:
-        """Return the newest available version, or installed if up to date."""
+        """Return the newest available version, or installed if up to date.
+        """
         data = self._container()
         if not data:
             return None
@@ -170,14 +180,23 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
         if not data.get("updateAvailable", False):
             return self.installed_version
 
+        image = data.get("image", {})
         result = data.get("result") or {}
-        tag = result.get("tag")
-        if tag:
-            return tag
+        installed_tag = image.get("tag", {}).get("value")
+        new_tag = result.get("tag")
 
-        digest = result.get("digest")
-        if digest:
-            return digest
+        # A genuine tag change: show the new tag.
+        if new_tag and new_tag != installed_tag:
+            return new_tag
+
+        # Tag unchanged (or absent) but the digest moved: digest-only update.
+        new_digest = result.get("digest")
+        if new_digest:
+            short = _short_digest(new_digest)
+            return f"{installed_tag} ({short})" if installed_tag else new_digest
+
+        if new_tag:
+            return new_tag
 
         return self.installed_version
 
