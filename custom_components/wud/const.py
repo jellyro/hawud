@@ -36,6 +36,12 @@ TRIGGER_TYPES_UPDATER = frozenset({"docker", "compose", "dockercompose"})
 
 INSTALL_TIMEOUT = 600  # seconds (10 minutes)
 INSTALL_POLL_INTERVAL = 15  # seconds (15 seconds)
+INSTALL_ESTIMATED_DURATION = 60  # seconds
+PROGRESS_UPDATE_INTERVAL = 2  # seconds
+
+# Cap the simulated progress at this percentage until completion is confirmed,
+# so the bar never claims 100% before WUD reports the update is done.
+PROGRESS_MAX_BEFORE_COMPLETE = 90
 
 CONF_MAX_CONCURRENT_UPDATES = "max_concurrent_updates"
 DEFAULT_MAX_CONCURRENT_UPDATES = 2  # 0 = unlimited

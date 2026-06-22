@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
+import time
+from contextlib import nullcontext
 from typing import Any
 
 import aiohttp
@@ -14,7 +17,15 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, INSTALL_POLL_INTERVAL, INSTALL_TIMEOUT, TRIGGER_TYPES_UPDATER
+from .const import (
+    DOMAIN,
+    INSTALL_ESTIMATED_DURATION,
+    INSTALL_POLL_INTERVAL,
+    INSTALL_TIMEOUT,
+    PROGRESS_MAX_BEFORE_COMPLETE,
+    PROGRESS_UPDATE_INTERVAL,
+    TRIGGER_TYPES_UPDATER,
+)
 from .coordinator import WudCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -74,7 +85,9 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
         self._container_key = container_key
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_{container_key}"
-        self._attr_in_progress: bool | int = False
+        self._attr_in_progress: bool = False
+        self._attr_update_percentage: int | None = None
+        self._install_done: asyncio.Event | None = None
 
     def _container(self) -> dict[str, Any] | None:
         """Return the container data dict from the coordinator, or None."""
@@ -302,7 +315,7 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
         reads back the container state.  Exits early as soon as updateAvailable
         is False, or after INSTALL_TIMEOUT seconds.
         """
-        iterations = INSTALL_TIMEOUT // INSTALL_POLL_INTERVAL
+        iterations = max(int(INSTALL_TIMEOUT // INSTALL_POLL_INTERVAL), 1)
         for iteration in range(iterations):
             await asyncio.sleep(INSTALL_POLL_INTERVAL)
             elapsed = (iteration + 1) * INSTALL_POLL_INTERVAL
@@ -341,60 +354,121 @@ class WudUpdateEntity(CoordinatorEntity[WudCoordinator], UpdateEntity):
             self.title,
         )
 
+    async def _async_run_progress(self) -> None:
+        """Advance a simulated progress bar until the install is confirmed done.
+
+        The percentage follows an asymptotic curve that approaches
+        ``PROGRESS_MAX_BEFORE_COMPLETE`` over ``INSTALL_ESTIMATED_DURATION``
+        seconds, so the bar keeps moving (and visibly decelerating) while the
+        real pull/recreate runs in the background.  It snaps to 100% once the
+        install completes.  Because this is decoupled from the trigger call, a
+        transient WUD error no longer collapses the bar instantly.
+        """
+        assert self._install_done is not None
+        start = time.monotonic()
+        # Time constant so roughly 95% of the curve is covered within the
+        # estimated duration (1 - e^-3 ~= 0.95).
+        tau = max(INSTALL_ESTIMATED_DURATION / 3, 1)
+        while not self._install_done.is_set():
+            elapsed = time.monotonic() - start
+            fraction = 1 - math.exp(-elapsed / tau)
+            pct = min(
+                PROGRESS_MAX_BEFORE_COMPLETE,
+                round(PROGRESS_MAX_BEFORE_COMPLETE * fraction),
+            )
+            if pct != self._attr_update_percentage:
+                self._attr_update_percentage = pct
+                self.async_write_ha_state()
+            try:
+                await asyncio.wait_for(
+                    self._install_done.wait(), timeout=PROGRESS_UPDATE_INTERVAL
+                )
+            except asyncio.TimeoutError:
+                pass
+
+        self._attr_update_percentage = 100
+        self.async_write_ha_state()
+
+    async def _async_trigger_update(self, wud_id: str) -> None:
+        """Kick off the actual update via a WUD trigger or watch refresh.
+
+        Prefers docker/compose triggers (which recreate the container) over
+        notification-only triggers, falling back to a manual watch refresh when
+        no triggers are configured.
+        """
+        triggers = await self.coordinator.async_get_container_triggers(wud_id)
+
+        if not triggers:
+            _LOGGER.info(
+                "No triggers configured for container '%s'; "
+                "running a watch refresh instead",
+                self.title,
+            )
+            await self.coordinator.async_watch_container(wud_id)
+            return
+
+        chosen = next(
+            (t for t in triggers if t.get("type") in TRIGGER_TYPES_UPDATER),
+            triggers[0],
+        )
+        _LOGGER.info(
+            "Running trigger '%s/%s' for container '%s'",
+            chosen["type"],
+            chosen["name"],
+            self.title,
+        )
+        await self.coordinator.async_run_trigger(
+            wud_id,
+            chosen["type"],
+            chosen["name"],
+        )
+
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
     ) -> None:
-        """Invoke the WUD trigger to update this container.
+        """Update this container, showing an estimated progress bar.
 
-        Prefers docker/compose triggers (which actually recreate the container)
-        over notification-only triggers. Falls back to a manual watch refresh
-        when no triggers are configured.  Keeps in_progress=True while polling
-        WUD so HA shows the updating state until the container is confirmed
-        updated (or the timeout is reached).
+        Honours the coordinator's concurrent-update semaphore, then fires the
+        update trigger and polls WUD until the container reports no pending
+        update (or the timeout is reached).  A simulated progress bar runs for
+        the whole duration so the UI shows continuous progress rather than
+        snapping straight back to "update available".
         """
         wud_id = self._wud_id()
         if not wud_id:
             _LOGGER.error("No WUD container ID available for '%s'", self._container_key)
             return
 
+        self._install_done = asyncio.Event()
         self._attr_in_progress = True
+        self._attr_update_percentage = 0
         self.async_write_ha_state()
 
+        semaphore = self.coordinator.update_semaphore
+        progress_task: asyncio.Task[None] | None = None
         try:
-            triggers = await self.coordinator.async_get_container_triggers(wud_id)
-
-            if not triggers:
-                _LOGGER.info(
-                    "No triggers configured for container '%s'; "
-                    "running a watch refresh instead",
-                    self.title,
+            async with (semaphore if semaphore is not None else nullcontext()):
+                # Start the bar only once we hold the semaphore, so its timing
+                # reflects real work rather than time spent queued.
+                progress_task = self.hass.async_create_task(
+                    self._async_run_progress()
                 )
-                await self.coordinator.async_watch_container(wud_id)
-            else:
-                chosen = next(
-                    (t for t in triggers if t.get("type") in TRIGGER_TYPES_UPDATER),
-                    triggers[0],
-                )
-                _LOGGER.info(
-                    "Running trigger '%s/%s' for container '%s'",
-                    chosen["type"],
-                    chosen["name"],
-                    self.title,
-                )
-                await self.coordinator.async_run_trigger(
-                    wud_id,
-                    chosen["type"],
-                    chosen["name"],
-                )
-
-            await self._async_wait_for_update(wud_id)
-        except aiohttp.ClientError as err:
-            _LOGGER.error(
-                "Failed to trigger update for container '%s': %s",
-                self.title,
-                err,
-            )
+                try:
+                    await self._async_trigger_update(wud_id)
+                except aiohttp.ClientError as err:
+                    _LOGGER.error(
+                        "Failed to trigger update for container '%s': %s; "
+                        "continuing to poll in case it still completes",
+                        self.title,
+                        err,
+                    )
+                await self._async_wait_for_update(wud_id)
         finally:
+            self._install_done.set()
+            if progress_task is not None:
+                await progress_task
             self._attr_in_progress = False
+            self._attr_update_percentage = None
+            self._install_done = None
             self.async_write_ha_state()
             await self.coordinator.async_request_refresh()

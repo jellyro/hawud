@@ -2,6 +2,10 @@
 from __future__ import annotations
 # pylint: disable=protected-access
 
+import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import aiohttp
 import pytest
 
 from custom_components.wud.update import WudUpdateEntity
@@ -16,6 +20,21 @@ def _make_entity(coordinator, entry, container_key="local_freshrss"):
     entity._entry = entry
     entity._attr_unique_id = f"test_{container_key}"
     entity._attr_in_progress = False
+    entity._attr_update_percentage = None
+    entity._install_done = None
+    return entity
+
+
+def _make_install_entity(coordinator, entry, written, container_key="local_freshrss"):
+    """Build an entity wired with a fake hass and a state-recording stub."""
+    entity = _make_entity(coordinator, entry, container_key)
+    loop = asyncio.get_event_loop()
+    hass = MagicMock()
+    hass.async_create_task = lambda coro: loop.create_task(coro)
+    entity.hass = hass
+    entity.async_write_ha_state = lambda: written.append(
+        (entity._attr_in_progress, entity._attr_update_percentage)
+    )
     return entity
 
 
@@ -163,3 +182,66 @@ def test_not_available_when_container_missing(mock_coordinator, mock_entry):
     mock_coordinator.data = {}
     entity = _make_entity(mock_coordinator, mock_entry)
     assert entity.available is False
+
+
+# ---------------------------------------------------------------------------
+# async_install — progress bar & resilience
+# ---------------------------------------------------------------------------
+
+async def test_async_install_runs_progress_and_completes(mock_coordinator, mock_entry):
+    """A successful install shows progress, snaps to 100%, then clears state."""
+    mock_coordinator.update_semaphore = None
+    mock_coordinator.async_get_container_triggers = AsyncMock(return_value=[])
+    mock_coordinator.async_watch_container = AsyncMock()
+    # First poll already reports no pending update -> confirmed complete.
+    mock_coordinator.async_get_single_container = AsyncMock(
+        return_value=CONTAINER_NO_UPDATE
+    )
+    mock_coordinator.async_request_refresh = AsyncMock()
+
+    written: list[tuple[bool, int | None]] = []
+    entity = _make_install_entity(mock_coordinator, mock_entry, written)
+
+    with patch("custom_components.wud.update.INSTALL_POLL_INTERVAL", 0.01), \
+            patch("custom_components.wud.update.PROGRESS_UPDATE_INTERVAL", 0.01), \
+            patch("custom_components.wud.update.INSTALL_ESTIMATED_DURATION", 0.05):
+        await entity.async_install(None, False)
+
+    # Bar reached 100% at some point and state was cleared on completion.
+    assert any(pct == 100 for _, pct in written)
+    assert entity._attr_in_progress is False
+    assert entity._attr_update_percentage is None
+    assert entity._install_done is None
+    mock_coordinator.async_request_refresh.assert_awaited_once()
+
+
+async def test_async_install_keeps_polling_when_trigger_errors(
+    mock_coordinator, mock_entry
+):
+    """A trigger ClientError must not abort polling or collapse progress instantly."""
+    mock_coordinator.update_semaphore = None
+    mock_coordinator.async_get_container_triggers = AsyncMock(
+        return_value=[{"type": "docker", "name": "update"}]
+    )
+    mock_coordinator.async_run_trigger = AsyncMock(
+        side_effect=aiohttp.ClientError("boom")
+    )
+    mock_coordinator.async_watch_container = AsyncMock()
+    # Still updating on the first poll, confirmed done on the second.
+    mock_coordinator.async_get_single_container = AsyncMock(
+        side_effect=[CONTAINER_WITH_UPDATE, CONTAINER_NO_UPDATE]
+    )
+    mock_coordinator.async_request_refresh = AsyncMock()
+
+    written: list[tuple[bool, int | None]] = []
+    entity = _make_install_entity(mock_coordinator, mock_entry, written)
+
+    with patch("custom_components.wud.update.INSTALL_POLL_INTERVAL", 0.01), \
+            patch("custom_components.wud.update.PROGRESS_UPDATE_INTERVAL", 0.01), \
+            patch("custom_components.wud.update.INSTALL_ESTIMATED_DURATION", 0.05):
+        await entity.async_install(None, False)
+
+    # Polling continued past the failed trigger (two single-container reads).
+    assert mock_coordinator.async_get_single_container.await_count == 2
+    assert entity._attr_in_progress is False
+    mock_coordinator.async_request_refresh.assert_awaited_once()
