@@ -9,7 +9,13 @@ from homeassistant.core import HomeAssistant
 
 from .coordinator import WudCoordinator
 
-PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SELECT, Platform.TIME, Platform.UPDATE]
+PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
+    Platform.BUTTON,
+    Platform.SELECT,
+    Platform.TIME,
+    Platform.UPDATE,
+]
 
 WudConfigEntry: TypeAlias = ConfigEntry[WudCoordinator]
 

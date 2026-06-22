@@ -7,30 +7,67 @@
         "data": {
           "url": "URL de WUD",
           "name": "Nombre de instancia (opcional)",
-          "username": "Nombre de usuario (opcional)",
-          "password": "Contraseña o token de API (opcional)",
+          "auth_method": "Método de autenticación",
           "verify_ssl": "Verificar certificado TLS",
           "scan_interval": "Intervalo de sondeo (segundos)"
         },
         "data_description": {
           "url": "URL base de su instancia WUD, p. ej. http://192.168.1.10:3000 o https://wud.example.com",
           "name": "Un nombre para identificar esta instancia WUD y prefijar sus entidades, p. ej. Servidor doméstico",
+          "auth_method": "Ajústelo según cómo esté protegido su servidor WUD (WUD_AUTH_*). Elija Anónimo cuando no haya autenticación configurada.",
           "verify_ssl": "Desactivar al usar un certificado autofirmado detrás de un proxy inverso",
           "scan_interval": "Con qué frecuencia sondear WUD para actualizaciones de contenedores (mínimo 60 s)"
+        }
+      },
+      "basic": {
+        "title": "Autenticación HTTP Basic",
+        "description": "Introduzca el nombre de usuario y la contraseña configurados para la autenticación Basic de WUD.",
+        "data": {
+          "username": "Nombre de usuario",
+          "password": "Contraseña"
+        }
+      },
+      "bearer": {
+        "title": "Token Bearer",
+        "description": "Pegue un token de acceso/API de larga duración. Se envía como encabezado 'Authorization: Bearer'.",
+        "data": {
+          "token": "Token Bearer"
+        },
+        "data_description": {
+          "token": "Un token estático que su proveedor de identidad o proxy inverso acepta para la API de WUD."
+        }
+      },
+      "oidc": {
+        "title": "OpenID Connect (credenciales de cliente)",
+        "description": "Configure un cliente de cuenta de servicio / credenciales de cliente (p. ej. Authentik, Authelia, Keycloak). La integración obtiene y renueva los tokens de acceso automáticamente.",
+        "data": {
+          "client_id": "ID de cliente",
+          "client_secret": "Secreto de cliente",
+          "oidc_discovery_url": "URL de descubrimiento OIDC",
+          "oidc_scope": "Scope"
+        },
+        "data_description": {
+          "oidc_discovery_url": "La URL .well-known/openid-configuration del realm/aplicación de su proveedor de identidad.",
+          "oidc_scope": "Scopes separados por espacios solicitados para el token de acceso (predeterminado: openid)."
         }
       },
       "reauth_confirm": {
         "title": "Volver a autenticarse con What's Up Docker",
         "description": "Las credenciales para {url} ya no son válidas. Introduzca nuevas credenciales.",
         "data": {
-          "username": "Nombre de usuario (opcional)",
-          "password": "Contraseña o token de API (opcional)"
+          "username": "Nombre de usuario",
+          "password": "Contraseña",
+          "token": "Token Bearer",
+          "client_id": "ID de cliente",
+          "client_secret": "Secreto de cliente",
+          "oidc_discovery_url": "URL de descubrimiento OIDC",
+          "oidc_scope": "Scope"
         }
       }
     },
     "error": {
       "cannot_connect": "No se puede conectar con WUD. Compruebe la URL y que WUD esté ejecutándose.",
-      "invalid_auth": "Nombre de usuario o contraseña/token no válidos.",
+      "invalid_auth": "Error de autenticación. Compruebe las credenciales del método seleccionado.",
       "unknown": "Error inesperado. Compruebe los registros de Home Assistant."
     },
     "abort": {
@@ -54,7 +91,22 @@
       }
     }
   },
+  "selector": {
+    "auth_method": {
+      "options": {
+        "none": "Anónimo (sin autenticación)",
+        "basic": "HTTP Basic (usuario y contraseña)",
+        "bearer": "Token Bearer",
+        "oidc": "OpenID Connect (credenciales de cliente)"
+      }
+    }
+  },
   "entity": {
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Conectividad"
+      }
+    },
     "select": {
       "auto_update": {
         "state": {

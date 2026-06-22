@@ -7,30 +7,67 @@
         "data": {
           "url": "URL WUD",
           "name": "Numele instanței (opțional)",
-          "username": "Nume utilizator (opțional)",
-          "password": "Parolă sau token API (opțional)",
+          "auth_method": "Metodă de autentificare",
           "verify_ssl": "Verificare certificat TLS",
           "scan_interval": "Interval de interogare (secunde)"
         },
         "data_description": {
           "url": "URL de bază al instanței WUD, de ex. http://192.168.1.10:3000 sau https://wud.example.com",
           "name": "Un nume prietenos pentru a identifica această instanță WUD și a prefixa entitățile, ex. Server acasă",
+          "auth_method": "Potriviți acest lucru cu modul în care este securizat serverul WUD (WUD_AUTH_*). Alegeți Anonim când nu este configurată nicio autentificare.",
           "verify_ssl": "Dezactivați când utilizați un certificat auto-semnat în spatele unui proxy invers",
           "scan_interval": "Cât de des să interogați WUD pentru actualizări de containere (minim 60 s)"
+        }
+      },
+      "basic": {
+        "title": "Autentificare HTTP Basic",
+        "description": "Introduceți numele de utilizator și parola configurate pentru autentificarea Basic WUD.",
+        "data": {
+          "username": "Nume utilizator",
+          "password": "Parolă"
+        }
+      },
+      "bearer": {
+        "title": "Token Bearer",
+        "description": "Lipiți un token de acces/API de lungă durată. Este trimis ca antet 'Authorization: Bearer'.",
+        "data": {
+          "token": "Token Bearer"
+        },
+        "data_description": {
+          "token": "Un token static pe care furnizorul dvs. de identitate sau proxy-ul invers îl acceptă pentru API-ul WUD."
+        }
+      },
+      "oidc": {
+        "title": "OpenID Connect (client credentials)",
+        "description": "Configurați un client de cont de serviciu / client credentials (ex. Authentik, Authelia, Keycloak). Integrarea obține și reînnoiește automat token-urile de acces.",
+        "data": {
+          "client_id": "ID client",
+          "client_secret": "Secret client",
+          "oidc_discovery_url": "URL de descoperire OIDC",
+          "oidc_scope": "Scope"
+        },
+        "data_description": {
+          "oidc_discovery_url": "URL-ul .well-known/openid-configuration al realm-ului/aplicației furnizorului dvs. de identitate.",
+          "oidc_scope": "Scope-uri separate prin spații solicitate pentru token-ul de acces (implicit: openid)."
         }
       },
       "reauth_confirm": {
         "title": "Re-autentificare cu What's Up Docker",
         "description": "Credențialele pentru {url} nu mai sunt valide. Introduceți credențiale noi.",
         "data": {
-          "username": "Nume utilizator (opțional)",
-          "password": "Parolă sau token API (opțional)"
+          "username": "Nume utilizator",
+          "password": "Parolă",
+          "token": "Token Bearer",
+          "client_id": "ID client",
+          "client_secret": "Secret client",
+          "oidc_discovery_url": "URL de descoperire OIDC",
+          "oidc_scope": "Scope"
         }
       }
     },
     "error": {
       "cannot_connect": "Nu se poate conecta la WUD. Verificați URL-ul și că WUD rulează.",
-      "invalid_auth": "Nume utilizator sau parolă/token invalid.",
+      "invalid_auth": "Autentificare eșuată. Verificați credențialele pentru metoda selectată.",
       "unknown": "Eroare neașteptată. Verificați jurnalele Home Assistant."
     },
     "abort": {
@@ -54,7 +91,22 @@
       }
     }
   },
+  "selector": {
+    "auth_method": {
+      "options": {
+        "none": "Anonim (fără autentificare)",
+        "basic": "HTTP Basic (nume utilizator şi parolă)",
+        "bearer": "Token Bearer",
+        "oidc": "OpenID Connect (client credentials)"
+      }
+    }
+  },
   "entity": {
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Conectivitate"
+      }
+    },
     "select": {
       "auto_update": {
         "state": {

@@ -7,30 +7,67 @@
         "data": {
           "url": "URL WUD",
           "name": "Nom de l'instance (facultatif)",
-          "username": "Nom d'utilisateur (optionnel)",
-          "password": "Mot de passe ou jeton API (optionnel)",
+          "auth_method": "Méthode d'authentification",
           "verify_ssl": "Vérifier le certificat TLS",
           "scan_interval": "Intervalle de sondage (secondes)"
         },
         "data_description": {
           "url": "URL de base de votre instance WUD, par ex. http://192.168.1.10:3000 ou https://wud.example.com",
           "name": "Un nom convivial pour identifier cette instance WUD et préfixer ses entités, ex. Serveur maison",
+          "auth_method": "Adaptez selon la façon dont votre serveur WUD est sécurisé (WUD_AUTH_*). Choisissez Anonyme si aucune authentification n'est configurée.",
           "verify_ssl": "Désactiver lors de l'utilisation d'un certificat auto-signé derrière un proxy inverse",
           "scan_interval": "Fréquence à laquelle sonder WUD pour les mises à jour de conteneurs (minimum 60 s)"
+        }
+      },
+      "basic": {
+        "title": "Authentification HTTP Basic",
+        "description": "Entrez le nom d'utilisateur et le mot de passe configurés pour l'authentification Basic de WUD.",
+        "data": {
+          "username": "Nom d'utilisateur",
+          "password": "Mot de passe"
+        }
+      },
+      "bearer": {
+        "title": "Jeton Bearer",
+        "description": "Collez un jeton d'accès/API de longue durée. Il est envoyé comme en-tête 'Authorization: Bearer'.",
+        "data": {
+          "token": "Jeton Bearer"
+        },
+        "data_description": {
+          "token": "Un jeton statique que votre fournisseur d'identité ou proxy inverse accepte pour l'API WUD."
+        }
+      },
+      "oidc": {
+        "title": "OpenID Connect (client credentials)",
+        "description": "Configurez un client compte de service / client credentials (ex. Authentik, Authelia, Keycloak). L'intégration récupère et renouvelle automatiquement les jetons d'accès.",
+        "data": {
+          "client_id": "ID client",
+          "client_secret": "Secret client",
+          "oidc_discovery_url": "URL de découverte OIDC",
+          "oidc_scope": "Scope"
+        },
+        "data_description": {
+          "oidc_discovery_url": "L'URL .well-known/openid-configuration du realm/de l'application de votre fournisseur d'identité.",
+          "oidc_scope": "Scopes séparés par des espaces demandés pour le jeton d'accès (par défaut : openid)."
         }
       },
       "reauth_confirm": {
         "title": "Réauthentifier avec What's Up Docker",
         "description": "Les identifiants pour {url} ne sont plus valides. Entrez de nouveaux identifiants.",
         "data": {
-          "username": "Nom d'utilisateur (optionnel)",
-          "password": "Mot de passe ou jeton API (optionnel)"
+          "username": "Nom d'utilisateur",
+          "password": "Mot de passe",
+          "token": "Jeton Bearer",
+          "client_id": "ID client",
+          "client_secret": "Secret client",
+          "oidc_discovery_url": "URL de découverte OIDC",
+          "oidc_scope": "Scope"
         }
       }
     },
     "error": {
       "cannot_connect": "Impossible de se connecter à WUD. Vérifiez l'URL et que WUD est en cours d'exécution.",
-      "invalid_auth": "Nom d'utilisateur ou mot de passe/jeton invalide.",
+      "invalid_auth": "Échec de l'authentification. Vérifiez les identifiants pour la méthode sélectionnée.",
       "unknown": "Erreur inattendue. Vérifiez les journaux Home Assistant."
     },
     "abort": {
@@ -54,7 +91,22 @@
       }
     }
   },
+  "selector": {
+    "auth_method": {
+      "options": {
+        "none": "Anonyme (aucune authentification)",
+        "basic": "HTTP Basic (nom d'utilisateur et mot de passe)",
+        "bearer": "Jeton Bearer",
+        "oidc": "OpenID Connect (client credentials)"
+      }
+    }
+  },
   "entity": {
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Connectivité"
+      }
+    },
     "select": {
       "auto_update": {
         "state": {

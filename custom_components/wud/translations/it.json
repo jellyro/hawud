@@ -7,30 +7,67 @@
         "data": {
           "url": "URL WUD",
           "name": "Nome istanza (opzionale)",
-          "username": "Nome utente (opzionale)",
-          "password": "Password o token API (opzionale)",
+          "auth_method": "Metodo di autenticazione",
           "verify_ssl": "Verifica certificato TLS",
           "scan_interval": "Intervallo di polling (secondi)"
         },
         "data_description": {
           "url": "URL di base della tua istanza WUD, es. http://192.168.1.10:3000 o https://wud.example.com",
           "name": "Un nome descrittivo per identificare questa istanza WUD e prefissare le entità, es. Server casa",
+          "auth_method": "Imposta in base a come è protetto il tuo server WUD (WUD_AUTH_*). Scegli Anonimo quando non è configurata alcuna autenticazione.",
           "verify_ssl": "Disabilita quando si utilizza un certificato autofirmato dietro un reverse proxy",
           "scan_interval": "Con quale frequenza interrogare WUD per aggiornamenti dei container (minimo 60 s)"
+        }
+      },
+      "basic": {
+        "title": "Autenticazione HTTP Basic",
+        "description": "Inserisci il nome utente e la password configurati per l'autenticazione Basic di WUD.",
+        "data": {
+          "username": "Nome utente",
+          "password": "Password"
+        }
+      },
+      "bearer": {
+        "title": "Token Bearer",
+        "description": "Incolla un token di accesso/API a lunga durata. Viene inviato come header 'Authorization: Bearer'.",
+        "data": {
+          "token": "Token Bearer"
+        },
+        "data_description": {
+          "token": "Un token statico che il tuo provider di identità o reverse proxy accetta per l'API WUD."
+        }
+      },
+      "oidc": {
+        "title": "OpenID Connect (client credentials)",
+        "description": "Configura un client account di servizio / client credentials (es. Authentik, Authelia, Keycloak). L'integrazione recupera e rinnova automaticamente i token di accesso.",
+        "data": {
+          "client_id": "ID client",
+          "client_secret": "Secret client",
+          "oidc_discovery_url": "URL di discovery OIDC",
+          "oidc_scope": "Scope"
+        },
+        "data_description": {
+          "oidc_discovery_url": "L'URL .well-known/openid-configuration del realm/dell'applicazione del tuo provider di identità.",
+          "oidc_scope": "Scope separati da spazi richiesti per il token di accesso (predefinito: openid)."
         }
       },
       "reauth_confirm": {
         "title": "Ri-autenticarsi con What's Up Docker",
         "description": "Le credenziali per {url} non sono più valide. Inserisci nuove credenziali.",
         "data": {
-          "username": "Nome utente (opzionale)",
-          "password": "Password o token API (opzionale)"
+          "username": "Nome utente",
+          "password": "Password",
+          "token": "Token Bearer",
+          "client_id": "ID client",
+          "client_secret": "Secret client",
+          "oidc_discovery_url": "URL di discovery OIDC",
+          "oidc_scope": "Scope"
         }
       }
     },
     "error": {
       "cannot_connect": "Impossibile connettersi a WUD. Controlla l'URL e che WUD sia in esecuzione.",
-      "invalid_auth": "Nome utente o password/token non validi.",
+      "invalid_auth": "Autenticazione non riuscita. Controlla le credenziali per il metodo selezionato.",
       "unknown": "Errore imprevisto. Controlla i log di Home Assistant."
     },
     "abort": {
@@ -54,7 +91,22 @@
       }
     }
   },
+  "selector": {
+    "auth_method": {
+      "options": {
+        "none": "Anonimo (nessuna autenticazione)",
+        "basic": "HTTP Basic (nome utente e password)",
+        "bearer": "Token Bearer",
+        "oidc": "OpenID Connect (client credentials)"
+      }
+    }
+  },
   "entity": {
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Connettività"
+      }
+    },
     "select": {
       "auto_update": {
         "state": {

@@ -7,30 +7,67 @@
         "data": {
           "url": "WUD URL",
           "name": "Instantienaam (optioneel)",
-          "username": "Gebruikersnaam (optioneel)",
-          "password": "Wachtwoord of API-token (optioneel)",
+          "auth_method": "Authenticatiemethode",
           "verify_ssl": "TLS-certificaat verifiëren",
           "scan_interval": "Poll-interval (seconden)"
         },
         "data_description": {
           "url": "Basis-URL van uw WUD-instantie, bijv. http://192.168.1.10:3000 of https://wud.example.com",
           "name": "Een naam om deze WUD-instantie te herkennen en entiteiten te prefixen, bijv. Thuisserver",
+          "auth_method": "Stem dit af op hoe uw WUD-server is beveiligd (WUD_AUTH_*). Kies Anoniem als er geen authenticatie is geconfigureerd.",
           "verify_ssl": "Schakel uit bij gebruik van een zelfondertekend certificaat achter een reverse proxy",
           "scan_interval": "Hoe vaak WUD moet worden gepolld voor container-updates (minimaal 60 s)"
+        }
+      },
+      "basic": {
+        "title": "HTTP Basic-authenticatie",
+        "description": "Voer de gebruikersnaam en het wachtwoord in die zijn geconfigureerd voor WUD Basic-auth.",
+        "data": {
+          "username": "Gebruikersnaam",
+          "password": "Wachtwoord"
+        }
+      },
+      "bearer": {
+        "title": "Bearer-token",
+        "description": "Plak een langlevend toegangs-/API-token. Het wordt verzonden als 'Authorization: Bearer'-header.",
+        "data": {
+          "token": "Bearer-token"
+        },
+        "data_description": {
+          "token": "Een statisch token dat uw identity provider of reverse proxy accepteert voor de WUD-API."
+        }
+      },
+      "oidc": {
+        "title": "OpenID Connect (client credentials)",
+        "description": "Configureer een service-account-/client-credentials-client (bijv. Authentik, Authelia, Keycloak). De integratie haalt toegangstokens op en vernieuwt ze automatisch.",
+        "data": {
+          "client_id": "Client-ID",
+          "client_secret": "Client-secret",
+          "oidc_discovery_url": "OIDC-discovery-URL",
+          "oidc_scope": "Scope"
+        },
+        "data_description": {
+          "oidc_discovery_url": "De .well-known/openid-configuration-URL van het realm/de applicatie van uw identity provider.",
+          "oidc_scope": "Door spaties gescheiden scopes die voor het toegangstoken worden aangevraagd (standaard: openid)."
         }
       },
       "reauth_confirm": {
         "title": "Opnieuw authenticeren met What's Up Docker",
         "description": "De referenties voor {url} zijn niet langer geldig. Voer nieuwe referenties in.",
         "data": {
-          "username": "Gebruikersnaam (optioneel)",
-          "password": "Wachtwoord of API-token (optioneel)"
+          "username": "Gebruikersnaam",
+          "password": "Wachtwoord",
+          "token": "Bearer-token",
+          "client_id": "Client-ID",
+          "client_secret": "Client-secret",
+          "oidc_discovery_url": "OIDC-discovery-URL",
+          "oidc_scope": "Scope"
         }
       }
     },
     "error": {
       "cannot_connect": "Kan geen verbinding maken met WUD. Controleer de URL en of WUD draait.",
-      "invalid_auth": "Ongeldige gebruikersnaam of wachtwoord/token.",
+      "invalid_auth": "Authenticatie mislukt. Controleer de referenties voor de geselecteerde methode.",
       "unknown": "Onverwachte fout. Controleer de Home Assistant-logboeken."
     },
     "abort": {
@@ -54,7 +91,22 @@
       }
     }
   },
+  "selector": {
+    "auth_method": {
+      "options": {
+        "none": "Anoniem (geen authenticatie)",
+        "basic": "HTTP Basic (gebruikersnaam en wachtwoord)",
+        "bearer": "Bearer-token",
+        "oidc": "OpenID Connect (client credentials)"
+      }
+    }
+  },
   "entity": {
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Verbinding"
+      }
+    },
     "select": {
       "auto_update": {
         "state": {

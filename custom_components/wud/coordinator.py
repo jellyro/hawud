@@ -13,13 +13,12 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
+from .auth import WudAuth
 from .const import (
     CONF_AUTO_UPDATE_TIME,
     CONF_MAX_CONCURRENT_UPDATES,
-    CONF_PASSWORD,
     CONF_SCAN_INTERVAL,
     CONF_URL,
-    CONF_USERNAME,
     CONF_VERIFY_SSL,
     DEFAULT_AUTO_UPDATE_TIME,
     DEFAULT_MAX_CONCURRENT_UPDATES,
@@ -39,13 +38,7 @@ class WudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize the coordinator."""
         self.url = entry.data[CONF_URL].rstrip("/")
-        self._auth: aiohttp.BasicAuth | None = None
-
-        username = entry.data.get(CONF_USERNAME, "")
-        password = entry.data.get(CONF_PASSWORD, "")
-        if username or password:
-            self._auth = aiohttp.BasicAuth(username or "", password or "")
-
+        self._auth = WudAuth(hass, dict(entry.data))
         self._verify_ssl: bool = entry.data.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL)
         self._auto_update_times: dict[str, dt_time | None] = {}
 
@@ -99,13 +92,15 @@ class WudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch all container data from the WUD API."""
         session = async_get_clientsession(self.hass, verify_ssl=self._verify_ssl)
+        kwargs = await self._auth.async_request_kwargs()
         try:
             async with session.get(
                 f"{self.url}/api/containers",
-                auth=self._auth,
                 timeout=aiohttp.ClientTimeout(total=30),
+                **kwargs,
             ) as resp:
                 if resp.status == 401:
+                    self._auth.invalidate()
                     raise ConfigEntryAuthFailed(
                         "Invalid credentials for WUD instance"
                     )
@@ -124,11 +119,12 @@ class WudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     ) -> list[dict[str, Any]]:
         """Return the list of triggers associated with a container."""
         session = async_get_clientsession(self.hass, verify_ssl=self._verify_ssl)
+        kwargs = await self._auth.async_request_kwargs()
         try:
             async with session.get(
                 f"{self.url}/api/containers/{container_id}/triggers",
-                auth=self._auth,
                 timeout=aiohttp.ClientTimeout(total=30),
+                **kwargs,
             ) as resp:
                 if resp.status == 404:
                     return []
@@ -145,10 +141,11 @@ class WudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     ) -> None:
         """Execute a specific trigger on a container."""
         session = async_get_clientsession(self.hass, verify_ssl=self._verify_ssl)
+        kwargs = await self._auth.async_request_kwargs()
         async with session.post(
             f"{self.url}/api/containers/{container_id}/triggers/{trigger_type}/{trigger_name}",
-            auth=self._auth,
             timeout=aiohttp.ClientTimeout(total=120),
+            **kwargs,
         ) as resp:
             resp.raise_for_status()
 
@@ -157,11 +154,12 @@ class WudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     ) -> dict[str, Any] | None:
         """Fetch the current state of a single container from the WUD API."""
         session = async_get_clientsession(self.hass, verify_ssl=self._verify_ssl)
+        kwargs = await self._auth.async_request_kwargs()
         try:
             async with session.get(
                 f"{self.url}/api/containers/{container_id}",
-                auth=self._auth,
                 timeout=aiohttp.ClientTimeout(total=30),
+                **kwargs,
             ) as resp:
                 if resp.status == 404:
                     return None
@@ -176,10 +174,11 @@ class WudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def async_watch_container(self, container_id: str) -> dict[str, Any]:
         """Trigger a manual image watch on a specific container."""
         session = async_get_clientsession(self.hass, verify_ssl=self._verify_ssl)
+        kwargs = await self._auth.async_request_kwargs()
         async with session.post(
             f"{self.url}/api/containers/{container_id}/watch",
-            auth=self._auth,
             timeout=aiohttp.ClientTimeout(total=60),
+            **kwargs,
         ) as resp:
             resp.raise_for_status()
             return await resp.json()

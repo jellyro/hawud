@@ -7,6 +7,24 @@ CONF_USERNAME = "username"
 CONF_PASSWORD = "password"
 CONF_SCAN_INTERVAL = "scan_interval"
 
+CONF_AUTH_METHOD = "auth_method"
+CONF_TOKEN = "token"
+CONF_CLIENT_ID = "client_id"
+CONF_CLIENT_SECRET = "client_secret"
+CONF_OIDC_DISCOVERY_URL = "oidc_discovery_url"
+CONF_OIDC_SCOPE = "oidc_scope"
+
+AUTH_NONE = "none"
+AUTH_BASIC = "basic"
+AUTH_BEARER = "bearer"
+AUTH_OIDC = "oidc"
+AUTH_METHODS = (AUTH_NONE, AUTH_BASIC, AUTH_BEARER, AUTH_OIDC)
+DEFAULT_AUTH_METHOD = AUTH_NONE
+DEFAULT_OIDC_SCOPE = "openid"
+
+# Refresh OIDC access tokens this many seconds before they expire.
+OIDC_TOKEN_EXPIRY_MARGIN = 30
+
 DEFAULT_SCAN_INTERVAL = 300  # seconds (5 minutes)
 MIN_SCAN_INTERVAL = 60  # seconds (1 minute)
 MAX_SCAN_INTERVAL = 86400  # seconds (24 hours)

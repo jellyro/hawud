@@ -6,29 +6,68 @@
         "description": "Enter the connection details for your WUD instance.",
         "data": {
           "url": "WUD URL",
-          "username": "Username (optional)",
-          "password": "Password or API token (optional)",
+          "name": "Instance name (optional)",
+          "auth_method": "Authentication method",
           "verify_ssl": "Verify TLS certificate",
           "scan_interval": "Poll interval (seconds)"
         },
         "data_description": {
           "url": "Base URL of your WUD instance, e.g. http://192.168.1.10:3000 or https://wud.example.com",
+          "name": "A friendly name to identify this WUD instance and prefix its entities, e.g. Home Server",
+          "auth_method": "Match this to how your WUD server is secured (WUD_AUTH_*). Choose Anonymous when no authentication is configured.",
           "verify_ssl": "Disable when using a self-signed certificate behind a reverse proxy",
           "scan_interval": "How often to poll WUD for container updates (minimum 60 s)"
+        }
+      },
+      "basic": {
+        "title": "HTTP Basic authentication",
+        "description": "Enter the username and password configured for WUD Basic auth.",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "bearer": {
+        "title": "Bearer token",
+        "description": "Paste a long-lived access/API token. It is sent as an 'Authorization: Bearer' header.",
+        "data": {
+          "token": "Bearer token"
+        },
+        "data_description": {
+          "token": "A static token that your identity provider or reverse proxy accepts for the WUD API."
+        }
+      },
+      "oidc": {
+        "title": "OpenID Connect (client credentials)",
+        "description": "Configure a service-account / client-credentials client (e.g. Authentik, Authelia, Keycloak). The integration fetches and refreshes access tokens automatically.",
+        "data": {
+          "client_id": "Client ID",
+          "client_secret": "Client secret",
+          "oidc_discovery_url": "OIDC discovery URL",
+          "oidc_scope": "Scope"
+        },
+        "data_description": {
+          "oidc_discovery_url": "The .well-known/openid-configuration URL of your identity provider's realm/application.",
+          "oidc_scope": "Space-separated scopes requested for the access token (default: openid)."
         }
       },
       "reauth_confirm": {
         "title": "Re-authenticate with What's Up Docker",
         "description": "Credentials for {url} are no longer valid. Enter new credentials.",
         "data": {
-          "username": "Username (optional)",
-          "password": "Password or API token (optional)"
+          "username": "Username",
+          "password": "Password",
+          "token": "Bearer token",
+          "client_id": "Client ID",
+          "client_secret": "Client secret",
+          "oidc_discovery_url": "OIDC discovery URL",
+          "oidc_scope": "Scope"
         }
       }
     },
     "error": {
       "cannot_connect": "Unable to connect to WUD. Check the URL and that WUD is running.",
-      "invalid_auth": "Invalid username or password/token.",
+      "invalid_auth": "Authentication failed. Check the credentials for the selected method.",
       "unknown": "Unexpected error. Check the Home Assistant logs."
     },
     "abort": {
@@ -41,16 +80,33 @@
         "title": "What's Up Docker options",
         "data": {
           "scan_interval": "Poll interval (seconds)",
+          "max_concurrent_updates": "Max concurrent updates (0 = unlimited)",
           "auto_update_time": "Integration update time"
         },
         "data_description": {
           "scan_interval": "How often to poll WUD for container updates (minimum 60 s)",
+          "max_concurrent_updates": "Maximum number of containers that can be updated at the same time. Set to 0 for no limit. When the limit is reached, additional updates are queued.",
           "auto_update_time": "Default time of day at which automatic updates are applied when a container is set to 'Integration Update Time'"
         }
       }
     }
   },
+  "selector": {
+    "auth_method": {
+      "options": {
+        "none": "Anonymous (no authentication)",
+        "basic": "HTTP Basic (username & password)",
+        "bearer": "Bearer token",
+        "oidc": "OpenID Connect (client credentials)"
+      }
+    }
+  },
   "entity": {
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Connectivity"
+      }
+    },
     "select": {
       "auto_update": {
         "state": {
